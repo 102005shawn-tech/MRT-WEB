@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>METRO·SYS 2000 // OCC 捷運運轉控制台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Silkscreen:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --bg-y2k: #0a0b14;
+      --panel-bg: rgba(18, 22, 38, 0.88);
+      --panel-chrome: linear-gradient(135deg, #c7d2fe 0%, #6366f1 25%, #312e81 50%, #4338ca 75%, #a5b4fc 100%);
+      --chrome-border: #4f46e5;
+      --y2k-pink: #ff2a85;
+      --y2k-cyan: #00f0ff;
+      --y2k-lime: #39ff14;
+      --y2k-yellow: #ffee00;
+      --y2k-orange: #ff6600;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-y2k);
+      color: #cbd5e1;
+      font-family: 'Share Tech Mono', monospace;
+      overflow: hidden;
+      margin: 0;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .font-pixel {
+      font-family: 'Silkscreen', cursive;
+    }
+
+    .font-terminal {
+      font-family: 'VT323', monospace;
+    }
+
+    /* Y2K Beveled Chrome Panels */
+    .y2k-window {
+      background: var(--panel-bg);
+      border: 2px solid;
+      border-color: #a5b4fc #312e81 #1e1b4b #c7d2fe;
+      box-shadow: 2px 2px 0px #000, inset 1px 1px 0px rgba(255, 255, 255, 0.4), inset -1px -1px 0px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+
+    .y2k-window-header {
+      background: linear-gradient(90deg, #1e1b4b 0%, #3730a3 50%, #ff2a85 100%);
+      border-bottom: 2px solid #4338ca;
+      padding: 3px 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Metallic Chrome Gradient Badges */
+    .chrome-badge {
+      background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 40%, #64748b 50%, #94a3b8 100%);
+      color: #0f172a;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+      border: 1px solid #475569;
+      box-shadow: 1px 1px 0px #000;
+    }
+
+    /* 90s Embossed Push Buttons */
+    .btn-y2k {
+      background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+      border: 2px solid;
+      border-color: #94a3b8 #0f172a #0f172a #94a3b8;
+      box-shadow: 1px 1px 0 #000;
+      transition: all 0.05s ease-in-out;
+    }
+    .btn-y2k:active {
+      border-color: #0f172a #94a3b8 #94a3b8 #0f172a;
+      transform: translate(1px, 1px);
+    }
+
+    .btn-caution {
+      background: repeating-linear-gradient(
+        -45deg,
+        #b91c1c,
+        #b91c1c 8px,
+        #f59e0b 8px,
+        #f59e0b 16px
+      );
+      color: #fff;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px #000;
+      border: 2px solid #fecaca;
+    }
+
+    /* CRT Scanlines & Screen Curvature Glitch */
+    .crt-overlay {
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%),
+                  linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03));
+      background-size: 100% 3px, 6px 100%;
+      pointer-events: none;
+    }
+
+    /* Y2K Dot Matrix Display */
+    .dot-matrix-display {
+      background-color: #030712;
+      background-image: radial-gradient(rgba(0, 240, 255, 0.2) 15%, transparent 16%);
+      background-size: 4px 4px;
+      border: 2px inset #1e293b;
+    }
+
+    /* Blinking LEDs */
+    .y2k-led {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: inset 1px 1px 2px rgba(255,255,255,0.8), 0 0 8px currentColor;
+    }
+    .led-lime { color: #39ff14; background-color: #39ff14; }
+    .led-pink { color: #ff2a85; background-color: #ff2a85; }
+    .led-cyan { color: #00f0ff; background-color: #00f0ff; }
+    .led-yellow { color: #ffee00; background-color: #ffee00; }
+    .led-red { color: #ff2233; background-color: #ff2233; }
+    .led-dim { color: #334155; background-color: #1e293b; box-shadow: none; }
+
+    /* Text Glows */
+    .glow-cyan { text-shadow: 0 0 6px rgba(0, 240, 255, 0.8), 0 0 12px rgba(0, 240, 255, 0.4); }
+    .glow-pink { text-shadow: 0 0 6px rgba(255, 42, 133, 0.8), 0 0 12px rgba(255, 42, 133, 0.4); }
+    .glow-lime { text-shadow: 0 0 6px rgba(57, 255, 20, 0.8), 0 0 12px rgba(57, 255, 20, 0.4); }
+
+    /* Panic state strobe */
+    @keyframes y2k-alarm {
+      0%, 100% { background-color: rgba(255, 0, 76, 0.15); }
+      50% { background-color: rgba(255, 0, 76, 0.45); }
+    }
+    .emergency-strobe {
+      animation: y2k-alarm 0.5s infinite alternate;
+    }
+
+    /* Custom high-tech scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; border-left: 1px solid #334155; }
+    ::-webkit-scrollbar-thumb { background: #6366f1; border: 1px solid #a5b4fc; }
+  </style>
+</head>
+<body class="flex flex-col h-screen w-screen relative overflow-hidden select-none bg-slate-950 text-slate-200">
+
+  <!-- Scanlines overlay -->
+  <div id="crt-layer" class="crt-overlay absolute inset-0 z-50 pointer-events-none"></div>
+
+  <!-- Y2K Marquee Ticker -->
+  <div class="h-6 bg-indigo-950 border-b-2 border-indigo-700/80 flex items-center px-3 z-30 overflow-hidden font-terminal text-sm text-cyan-300">
+    <span class="bg-pink-600 text-black px-1.5 py-0.2 font-pixel text-[9px] mr-2 shrink-0 font-bold">INFO-NET</span>
+    <marquee scrollamount="5" class="tracking-wider">
+      ::: METRO·SYS 2000 REV-3.88 READY ::: 中央行控核心連線正常 ::: 全線列車 CBTC-ATO 自動閉塞啟用中 ::: 台北車站(R10/BL12) 乘載率持續上升 ::: 牽引電網電壓 750V DC 穩定 ::: 歡迎使用 Y2K 復古控制介面 :::
+    </marquee>
+    <span class="text-xs text-lime-400 shrink-0 ml-3">STATUS: OPTIMAL</span>
+  </div>
+
+  <!-- Top Title Header -->
+  <header class="h-14 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 border-b-2 border-indigo-600 px-3 flex items-center justify-between z-20 shrink-0 shadow-md">
+    <div class="flex items-center space-x-3">
+      <!-- Chrome Badge OCC Logo -->
+      <div class="px-2.5 py-1 chrome-badge font-pixel text-xs tracking-wider flex items-center space-x-1.5 rounded-sm">
+        <span class="w-2.5 h-2.5 bg-pink-500 rounded-full animate-ping"></span>
+        <span class="font-bold">METRO·SYS 2000</span>
+      </div>
+      <span class="text-[11px] text-pink-400 font-pixel hidden sm:inline glow-pink">運轉控制管理伺服 (OCC)</span>
+
+      <div class="hidden md:flex items-center space-x-4 text-xs text-slate-400 pl-3 border-l border-indigo-800">
+        <div>UPTIME: <span id="y2k-uptime" class="text-lime-300 font-terminal text-base">089:12:44</span></div>
+        <div>訊號頻道: <span class="text-cyan-400">CH-088.4M</span></div>
+        <div>列車總數: <span class="text-pink-400 font-bold" id="total-trains-count">6 組線上</span></div>
+      </div>
+    </div>
+
+    <!-- Center LED Indicators -->
+    <div class="hidden lg:flex items-center space-x-4 bg-black/60 px-3 py-1 rounded border border-indigo-800/80">
+      <div class="flex items-center space-x-1.5 text-xs">
+        <span class="y2k-led led-lime" id="led-pwr"></span>
+        <span class="text-slate-300 text-[10px] font-pixel">PWR 電網</span>
+      </div>
+      <div class="flex items-center space-x-1.5 text-xs">
+        <span class="y2k-led led-cyan" id="led-cbtc"></span>
+        <span class="text-slate-300 text-[10px] font-pixel">CBTC 通訊</span>
+      </div>
+      <div class="flex items-center space-x-1.5 text-xs">
+        <span class="y2k-led led-yellow" id="led-switch"></span>
+        <span class="text-slate-300 text-[10px] font-pixel">道岔閉鎖</span>
+      </div>
+      <div class="flex items-center space-x-1.5 text-xs">
+        <span class="y2k-led led-pink" id="led-psd"></span>
+        <span class="text-slate-300 text-[10px] font-pixel">月台門聯鎖</span>
+      </div>
+    </div>
+
+    <!-- Controls & Retro Digital Clock -->
+    <div class="flex items-center space-x-3">
+      <button id="btn-panic" class="btn-caution px-3 py-1 text-xs font-pixel rounded tracking-wider shadow hover:brightness-110 active:scale-95 transition">
+        緊急煞停 (PANIC)
+      </button>
+
+      <button id="btn-toggle-crt" class="btn-y2k px-2.5 py-1 text-xs text-cyan-300 font-terminal text-sm hover:text-white rounded">
+        CRT: ON
+      </button>
+
+      <div class="bg-black border border-indigo-500/60 px-2 py-0.5 rounded text-right">
+        <div id="y2k-clock" class="text-lg font-terminal text-cyan-400 glow-cyan leading-none">00:00:00:00</div>
+        <div class="text-[9px] text-pink-400 font-pixel">TAIPEI STANDARD</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Multi-Panel Workspace -->
+  <main class="flex-1 grid grid-cols-12 grid-rows-12 gap-2 p-2 min-h-0 z-20">
+    
+    <!-- LEFT PANEL: Dynamic Train Fleet List & Schedule (cols 1-3) -->
+    <section class="col-span-12 md:col-span-3 row-span-8 y2k-window rounded flex flex-col overflow-hidden">
+      <div class="y2k-window-header">
+        <div class="flex items-center space-x-1.5">
+          <span class="w-2 h-2 bg-pink-400"></span>
+          <span class="text-[11px] font-pixel text-white font-bold">即時列車排班與到站</span>
+        </div>
+        <span class="text-[9px] font-terminal text-cyan-200">AUTO-REFRESH 1S</span>
+      </div>
+
+      <div class="grid grid-cols-6 text-[10px] text-indigo-300 bg-indigo-950/60 px-2 py-1 border-b border-indigo-900 font-pixel">
+        <span class="col-span-2">車次/線</span>
+        <span class="col-span-2">次站</span>
+        <span class="col-span-2 text-right">到站倒數</span>
+      </div>
+
+      <!-- Train list container -->
+      <div id="train-rows-container" class="flex-1 overflow-y-auto p-1.5 space-y-1.5 dot-matrix-display">
+        <!-- Injected dynamically via JS -->
+      </div>
+
+      <!-- Crowd density gauge summary -->
+      <div class="bg-slate-900/90 p-2 border-t-2 border-indigo-900 text-xs flex flex-col space-y-1">
+        <div class="flex justify-between items-center text-[10px] font-pixel text-slate-300">
+          <span>全線平均負載:</span>
+          <span id="system-avg-load" class="text-pink-400 font-bold">64%</span>
+        </div>
+        <div class="w-full bg-slate-950 h-2.5 border border-indigo-700/80 p-0.5 flex space-x-0.5">
+          <div id="load-seg-1" class="h-full w-1/4 bg-lime-400"></div>
+          <div id="load-seg-2" class="h-full w-1/4 bg-lime-400"></div>
+          <div id="load-seg-3" class="h-full w-1/4 bg-yellow-400"></div>
+          <div id="load-seg-4" class="h-full w-1/4 bg-pink-500 opacity-20"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CENTER PANEL: Y2K Dynamic Metro Vector Map (cols 4-9) -->
+    <section class="col-span-12 md:col-span-6 row-span-8 y2k-window rounded flex flex-col overflow-hidden relative">
+      <div class="y2k-window-header">
+        <div class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-lime-400 animate-pulse"></span>
+          <span class="text-[11px] font-pixel text-white font-bold">數位軌道聯鎖拓撲 (TRACK TOPOLOGY)</span>
+        </div>
+        <div class="flex items-center space-x-2 text-[10px] font-pixel">
+          <span class="text-pink-400">■ R紅</span>
+          <span class="text-cyan-400">■ BL藍</span>
+          <span class="text-lime-400">■ G綠</span>
+        </div>
+      </div>
+
+      <!-- Substation / Block signal lamp status strip -->
+      <div class="h-7 bg-slate-950/90 border-b border-indigo-900 px-3 flex items-center justify-between text-xs font-terminal">
+        <div class="flex items-center space-x-3 text-cyan-300">
+          <span>區間實體燈號:</span>
+          <div class="flex items-center space-x-1" id="track-signals">
+            <span class="y2k-led led-lime" title="BLK-1"></span>
+            <span class="y2k-led led-lime" title="BLK-2"></span>
+            <span class="y2k-led led-yellow" title="BLK-3"></span>
+            <span class="y2k-led led-lime" title="BLK-4"></span>
+            <span class="y2k-led led-red" title="BLK-5"></span>
+          </div>
+        </div>
+        <div class="text-[10px] text-pink-400 font-pixel">
+          CBTC 閉塞鎖定: NORMAL
+        </div>
+      </div>
+
+      <!-- Canvas for Metro Line Topology -->
+      <div class="flex-1 w-full h-full relative dot-matrix-display" id="metro-canvas-box">
+        <canvas id="metroTrackCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+      </div>
+
+      <!-- Interactive Switch Override Bar -->
+      <div class="h-8 bg-slate-900/90 border-t border-indigo-900 px-3 flex items-center justify-between text-xs">
+        <div class="flex items-center space-x-3">
+          <button id="btn-toggle-switch" class="btn-y2k px-2 py-0.5 text-[10px] text-yellow-300 font-pixel">
+            手動切換轉轍器 (SW-4)
+          </button>
+          <span id="switch-status-text" class="text-[11px] text-lime-400 font-terminal">道岔定位: NORMAL (線位A)</span>
+        </div>
+        <div class="text-slate-400 text-[10px]">
+          點選節點查看站點資訊
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: Fast Hex Waterfall & Dispatcher Log (cols 10-12) -->
+    <section class="col-span-12 md:col-span-3 row-span-8 y2k-window rounded flex flex-col overflow-hidden">
+      <div class="y2k-window-header">
+        <div class="flex items-center space-x-1.5">
+          <span class="w-2 h-2 bg-yellow-400"></span>
+          <span class="text-[11px] font-pixel text-white font-bold">通訊遙測與指令紀錄</span>
+        </div>
+        <span class="text-[9px] font-pixel text-lime-300">HEX 50Hz</span>
+      </div>
+
+      <!-- Hex Stream Screen -->
+      <div class="p-1 bg-black border-b-2 border-indigo-950">
+        <div class="text-[9px] text-slate-400 font-pixel px-1 flex justify-between">
+          <span>CBTC 訊框串流</span>
+          <span class="text-cyan-400">PORT: 8021</span>
+        </div>
+        <div id="hex-waterfall" class="h-28 overflow-hidden font-terminal text-[11px] leading-tight text-lime-400/90 p-1 bg-black/90 border border-slate-800">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Dispatch Log Header -->
+      <div class="bg-indigo-950/70 px-2 py-1 text-[10px] font-pixel text-pink-300 flex justify-between items-center border-b border-indigo-900">
+        <span>控制中心指令日誌</span>
+        <button id="btn-clear-log" class="text-[9px] hover:text-white underline">CLEAR</button>
+      </div>
+
+      <!-- Event Logs -->
+      <div id="event-log-container" class="flex-1 overflow-y-auto p-1.5 space-y-1 font-terminal text-xs bg-slate-950/80">
+        <!-- Event lines dynamically added -->
+      </div>
+    </section>
+
+    <!-- BOTTOM LEFT PANEL: Traction Power Oscilloscope (cols 1-6) -->
+    <section class="col-span-12 md:col-span-6 row-span-4 y2k-window rounded flex flex-col overflow-hidden">
+      <div class="y2k-window-header">
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 bg-lime-400"></span>
+          <span class="text-[11px] font-pixel text-white font-bold">牽引電網動態示波器 (750V DC DYNAMICS)</span>
+        </div>
+        <div class="flex space-x-3 text-[10px] font-terminal">
+          <span class="text-lime-400">▲ CH1 輸出脈衝</span>
+          <span class="text-pink-400">▲ CH2 饋線抗阻</span>
+        </div>
+      </div>
+      <div class="flex-1 relative w-full h-full dot-matrix-display" id="wave-box">
+        <canvas id="scopeCanvas" class="w-full h-full block"></canvas>
+      </div>
+      <div class="h-6 bg-slate-900 px-3 flex items-center justify-between text-[11px] font-terminal text-slate-400 border-t border-indigo-950">
+        <div>主變電站進電: <span class="text-cyan-300">161 kV STABLE</span></div>
+        <div>瞬時負載: <span class="text-pink-400 font-bold" id="live-kw">38,420 kW</span></div>
+        <div>諧波畸變: <span class="text-lime-300">1.4% THD</span></div>
+      </div>
+    </section>
+
+    <!-- BOTTOM RIGHT PANEL: Core Station Crowd Segments (cols 7-12) -->
+    <section class="col-span-12 md:col-span-6 row-span-4 y2k-window rounded flex flex-col overflow-hidden">
+      <div class="y2k-window-header">
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 bg-cyan-400"></span>
+          <span class="text-[11px] font-pixel text-white font-bold">主要核心車站疏運擁擠度監控 (STATION LOAD)</span>
+        </div>
+        <span class="text-[10px] font-terminal text-yellow-300">GATE SENSORS ACTIVE</span>
+      </div>
+
+      <div class="flex-1 p-2 grid grid-cols-2 sm:grid-cols-4 gap-2 items-center bg-slate-950/70">
+        <!-- Station 1 -->
+        <div class="bg-indigo-950/50 border border-indigo-800/80 p-2 rounded flex flex-col justify-between h-full">
+          <div class="flex justify-between items-center text-[10px] font-pixel">
+            <span class="text-white">R10 台北車站</span>
+            <span class="text-pink-400 font-bold" id="load-text-r10">88%</span>
+          </div>
+          <div class="space-y-1 my-1">
+            <div class="w-full bg-slate-900 h-2 border border-slate-700 rounded-sm overflow-hidden flex">
+              <div id="bar-r10" class="h-full bg-pink-500 w-[88%]"></div>
+            </div>
+          </div>
+          <div class="text-[9px] font-terminal text-slate-400 flex justify-between">
+            <span>月台狀態: 飽和</span>
+            <span class="text-yellow-400">疏導中</span>
+          </div>
+        </div>
+
+        <!-- Station 2 -->
+        <div class="bg-indigo-950/50 border border-indigo-800/80 p-2 rounded flex flex-col justify-between h-full">
+          <div class="flex justify-between items-center text-[10px] font-pixel">
+            <span class="text-white">BL12 市政府</span>
+            <span class="text-yellow-300 font-bold" id="load-text-bl12">72%</span>
+          </div>
+          <div class="space-y-1 my-1">
+            <div class="w-full bg-slate-900 h-2 border border-slate-700 rounded-sm overflow-hidden flex">
+              <div id="bar-bl12" class="h-full bg-yellow-400 w-[72%]"></div>
+            </div>
+          </div>
+          <div class="text-[9px] font-terminal text-slate-400 flex justify-between">
+            <span>月台狀態: 繁忙</span>
+            <span class="text-lime-400">閘門流暢</span>
+          </div>
+        </div>
+
+        <!-- Station 3 -->
+        <div class="bg-indigo-950/50 border border-indigo-800/80 p-2 rounded flex flex-col justify-between h-full">
+          <div class="flex justify-between items-center text-[10px] font-pixel">
+            <span class="text-white">G14 南京復興</span>
+            <span class="text-lime-300 font-bold" id="load-text-g14">54%</span>
+          </div>
+          <div class="space-y-1 my-1">
+            <div class="w-full bg-slate-900 h-2 border border-slate-700 rounded-sm overflow-hidden flex">
+              <div id="bar-g14" class="h-full bg-lime-400 w-[54%]"></div>
+            </div>
+          </div>
+          <div class="text-[9px] font-terminal text-slate-400 flex justify-between">
+            <span>月台狀態: 正常</span>
+            <span class="text-cyan-400">準點進站</span>
+          </div>
+        </div>
+
+        <!-- Station 4 -->
+        <div class="bg-indigo-950/50 border border-indigo-800/80 p-2 rounded flex flex-col justify-between h-full">
+          <div class="flex justify-between items-center text-[10px] font-pixel">
+            <span class="text-white">BL11 西門</span>
+            <span class="text-cyan-300 font-bold" id="load-text-bl11">63%</span>
+          </div>
+          <div class="space-y-1 my-1">
+            <div class="w-full bg-slate-900 h-2 border border-slate-700 rounded-sm overflow-hidden flex">
+              <div id="bar-bl11" class="h-full bg-cyan-400 w-[63%]"></div>
+            </div>
+          </div>
+          <div class="text-[9px] font-terminal text-slate-400 flex justify-between">
+            <span>月台狀態: 順暢</span>
+            <span class="text-lime-400">雙向換乘</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer system notes -->
+      <div class="h-6 bg-slate-900 px-3 flex items-center justify-between text-[10px] font-terminal text-slate-400 border-t border-indigo-950">
+        <span>防洪閘門: <span class="text-lime-400">LOCKED</span></span>
+        <span>環控抽風扇: <span class="text-cyan-400">100% RUN</span></span>
+        <span class="text-pink-400">Y2K KERNEL BUILD // 2000-09-24</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Notification Audio / Modal Box for Station Clicks -->
+  <div id="modal-station" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 y2k-window p-3 z-50 shadow-2xl">
+    <div class="y2k-window-header mb-2">
+      <span class="text-xs font-pixel text-white font-bold" id="modal-title">站點資訊檢視</span>
+      <button id="modal-close" class="text-pink-300 font-bold px-1 hover:text-white">✕</button>
+    </div>
+    <div class="text-xs font-terminal space-y-1 text-slate-300" id="modal-content">
+      <!-- Injected -->
+    </div>
+  </div>
+
+  <script>
+    /* --- STREAMING_CHUNK:Global Data & Metro Topology State --- */
+    const STATE = {
+      panicActive: false,
+      crtEnabled: true,
+      switchReversed: false,
+      startTime: Date.now() - 3600 * 1000 * 89, // 89 hours mock uptime
+      stations: [
+        { id: 'R08', name: '中正紀念堂', line: 'R', x: 260, y: 310, isHub: true },
+        { id: 'R09', name: '台大醫院',   line: 'R', x: 260, y: 240, isHub: false },
+        { id: 'R10', name: '台北車站',   line: 'R', x: 260, y: 170, isHub: true },
+        { id: 'R11', name: '中山',       line: 'R', x: 260, y: 105, isHub: true },
+        { id: 'R12', name: '雙連',       line: 'R', x: 260, y: 45,  isHub: false },
+
+        { id: 'BL10', name: '龍山寺',   line: 'BL', x: 110, y: 170, isHub: false },
+        { id: 'BL11', name: '西門',     line: 'BL', x: 185, y: 170, isHub: true },
+        { id: 'BL12', name: '台北車站', line: 'BL', x: 260, y: 170, isHub: true },
+        { id: 'BL13', name: '善導寺',   line: 'BL', x: 335, y: 170, isHub: false },
+        { id: 'BL14', name: '忠孝新生', line: 'BL', x: 410, y: 170, isHub: true },
+        { id: 'BL15', name: '忠孝復興', line: 'BL', x: 485, y: 170, isHub: true },
+        { id: 'BL16', name: '市政府',   line: 'BL', x: 560, y: 170, isHub: false },
+
+        { id: 'G12', name: '西門',       line: 'G', x: 185, y: 170, isHub: true },
+        { id: 'G13', name: '北門',       line: 'G', x: 205, y: 105, isHub: false },
+        { id: 'G14', name: '中山',       line: 'G', x: 260, y: 105, isHub: true },
+        { id: 'G15', name: '松江南京',   line: 'G', x: 380, y: 105, isHub: true },
+        { id: 'G16', name: '南京復興',   line: 'G', x: 485, y: 105, isHub: true }
+      ],
+      trains: [
+        { id: 'TR-01', line: 'R',  color: '#ff2a85', from: 'R08', to: 'R10', eta: 38, speed: 0.0035, progress: 0.15, load: 78 },
+        { id: 'TR-02', line: 'R',  color: '#ff2a85', from: 'R12', to: 'R10', eta: 72, speed: -0.0032, progress: 0.85, load: 84 },
+        { id: 'TR-11', line: 'BL', color: '#00f0ff', from: 'BL10', to: 'BL12', eta: 21, speed: 0.0030, progress: 0.35, load: 68 },
+        { id: 'TR-15', line: 'BL', color: '#00f0ff', from: 'BL16', to: 'BL14', eta: 54, speed: -0.0028, progress: 0.75, load: 92 },
+        { id: 'TR-21', line: 'G',  color: '#39ff14', from: 'G12', to: 'G15', eta: 44, speed: 0.0036, progress: 0.20, load: 46 },
+        { id: 'TR-24', line: 'G',  color: '#39ff14', from: 'G16', to: 'G13', eta: 67, speed: -0.0031, progress: 0.65, load: 58 }
+      ]
+    };
+
+    /* --- STREAMING_CHUNK:Digital Clock & Y2K Millisecond Ticks --- */
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      const ms = String(Math.floor(now.getMilliseconds() / 10)).padStart(2, '0');
+      document.getElementById('y2k-clock').innerText = `${h}:${m}:${s}:${ms}`;
+
+      // Uptime calculation
+      const diffSec = Math.floor((Date.now() - STATE.startTime) / 1000);
+      const uh = String(Math.floor(diffSec / 3600)).padStart(3, '0');
+      const um = String(Math.floor((diffSec % 3600) / 60)).padStart(2, '0');
+      const us = String(diffSec % 60).padStart(2, '0');
+      document.getElementById('y2k-uptime').innerText = `${uh}:${um}:${us}`;
+    }
+    setInterval(updateClock, 30);
+
+    /* --- STREAMING_CHUNK:Hexadecimal Waterfall Generator --- */
+    const hexContainer = document.getElementById('hex-waterfall');
+    const hexChars = '0123456789ABCDEF';
+    function streamHex() {
+      const p = document.createElement('div');
+      let hexLine = '0x' + Array.from({length: 4}, () => hexChars[Math.floor(Math.random() * 16)]).join('') + ' ';
+      for (let i = 0; i < 5; i++) {
+        hexLine += hexChars[Math.floor(Math.random() * 16)] + hexChars[Math.floor(Math.random() * 16)] + ' ';
+      }
+      hexLine += Math.random() > 0.1 ? ' [DAT_OK]' : ' [SYN_ACK]';
+      p.innerText = hexLine;
+      hexContainer.appendChild(p);
+
+      if (hexContainer.childNodes.length > 8) {
+        hexContainer.removeChild(hexContainer.firstChild);
+      }
+    }
+    setInterval(streamHex, 70);
+
+    /* --- STREAMING_CHUNK:Event Dispatch Console Logger --- */
+    const logBox = document.getElementById('event-log-container');
+    function addEventLog(msg, level = 'norm') {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      const entry = document.createElement('div');
+      let color = 'text-slate-300';
+      if (level === 'warn') color = 'text-yellow-300 font-bold';
+      if (level === 'danger') color = 'text-pink-500 font-bold animate-pulse';
+      if (level === 'good') color = 'text-lime-300';
+
+      entry.className = `${color} leading-none`;
+      entry.innerHTML = `<span class="text-indigo-400">[${timeStr}]</span> ${msg}`;
+      logBox.appendChild(entry);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    addEventLog('METRO·SYS 2000 OCC 核心通訊啟動 (TCP/IP PROTOCOL)', 'good');
+    addEventLog('藍線 BL12 月台門聯鎖感測器校驗通過', 'norm');
+    addEventLog('西門站轉轍器 SW-4 定位檢出正常', 'norm');
+    addEventLog('紅線 R10 台北車站潮汐人潮湧入，建議加開特快', 'warn');
+
+    document.getElementById('btn-clear-log').addEventListener('click', () => {
+      logBox.innerHTML = '';
+      addEventLog('系統紀錄已由操作員重設', 'norm');
+    });
+
+    /* --- STREAMING_CHUNK:Rendering Retro Train Rows Table --- */
+    const trainRowsContainer = document.getElementById('train-rows-container');
+    function renderTrainRows() {
+      let totalLoad = 0;
+      let html = '';
+
+      STATE.trains.forEach(t => {
+        totalLoad += t.load;
+        const lineBadge = t.line === 'R' ? 'border-pink-500 text-pink-400 bg-pink-950/60' :
+                          t.line === 'BL' ? 'border-cyan-400 text-cyan-300 bg-cyan-950/60' :
+                          'border-lime-400 text-lime-300 bg-lime-950/60';
+
+        const loadBadgeColor = t.load > 85 ? 'text-pink-400' : t.load > 65 ? 'text-yellow-300' : 'text-lime-400';
+
+        html += `
+          <div class="bg-indigo-950/40 border border-indigo-900/90 hover:border-pink-500/60 p-1.5 rounded transition flex flex-col space-y-1">
+            <div class="grid grid-cols-6 items-center text-xs">
+              <div class="col-span-2 flex items-center space-x-1">
+                <span class="text-[9px] px-1 font-pixel border rounded-sm ${lineBadge}">${t.line}</span>
+                <span class="font-pixel text-[10px] text-white">${t.id}</span>
+              </div>
+              <div class="col-span-2 text-slate-300 font-terminal text-sm truncate">
+                ➔ ${t.to}
+              </div>
+              <div class="col-span-2 text-right font-terminal text-base font-bold ${t.eta < 30 ? 'text-pink-500 animate-pulse' : 'text-lime-400'}">
+                ${Math.max(0, Math.floor(t.eta))}s
+              </div>
+            </div>
+            <div class="flex justify-between items-center text-[10px] font-terminal text-slate-400 border-t border-indigo-900/50 pt-0.5">
+              <span>承載: <span class="${loadBadgeColor} font-bold">${t.load}%</span></span>
+              <span>速度: ${(48 + Math.sin(t.eta) * 16).toFixed(0)} km/h</span>
+              <span class="text-cyan-300">● CBTC-OK</span>
+            </div>
+          </div>
+        `;
+      });
+
+      trainRowsContainer.innerHTML = html;
+
+      // Update average load and segment bar
+      const avg = Math.round(totalLoad / STATE.trains.length);
+      document.getElementById('system-avg-load').innerText = avg + '%';
+    }
+
+    /* --- STREAMING_CHUNK:Metro Topology Vector Canvas Drawing --- */
+    const canvas = document.getElementById('metroTrackCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function mapCoords(x, y) {
+      const origW = 680;
+      const origH = 380;
+      const pad = 40;
+      const sx = (canvas.width - pad * 2) / origW;
+      const sy = (canvas.height - pad * 2) / origH;
+      return {
+        x: pad + x * sx,
+        y: pad + y * sy
+      };
+    }
+
+    function renderTopology() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Y2K Retro Grid Background
+      ctx.save();
+      ctx.strokeStyle = 'rgba(79, 70, 229, 0.12)';
+      ctx.lineWidth = 1;
+      const step = 26;
+      for (let x = 0; x < canvas.width; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Lines paths
+      const metroLines = [
+        { color: '#ff2a85', glow: '#ff2a85', nodes: ['R12', 'R11', 'R10', 'R09', 'R08'] },
+        { color: '#00f0ff', glow: '#00f0ff', nodes: ['BL10', 'BL11', 'BL12', 'BL13', 'BL14', 'BL15', 'BL16'] },
+        { color: '#39ff14', glow: '#39ff14', nodes: ['G12', 'G13', 'G14', 'G15', 'G16'] }
+      ];
+
+      // Draw Rails
+      metroLines.forEach(line => {
+        ctx.save();
+        ctx.strokeStyle = line.color;
+        ctx.lineWidth = 4;
+        ctx.shadowColor = line.glow;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+
+        line.nodes.forEach((id, idx) => {
+          const st = STATE.stations.find(s => s.id === id);
+          const p = mapCoords(st.x, st.y);
+          if (idx === 0) ctx.moveTo(p.x, p.y);
+          else ctx.lineTo(p.x, p.y);
+        });
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // Draw Station Nodes
+      STATE.stations.forEach(st => {
+        const p = mapCoords(st.x, st.y);
+
+        ctx.save();
+        ctx.fillStyle = st.isHub ? '#ffee00' : '#ffffff';
+        ctx.shadowColor = st.isHub ? '#ffee00' : '#ffffff';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, st.isHub ? 5.5 : 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Station Label
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '10px "VT323", monospace';
+        ctx.fillText(st.name, p.x + 8, p.y + 4);
+        ctx.restore();
+      });
+
+      // Update & Render Animated Trains
+      STATE.trains.forEach(t => {
+        if (!STATE.panicActive) {
+          t.progress += t.speed;
+          if (t.progress >= 1) {
+            t.progress = 1;
+            t.speed = -Math.abs(t.speed);
+          } else if (t.progress <= 0) {
+            t.progress = 0;
+            t.speed = Math.abs(t.speed);
+          }
+        }
+
+        let pathNodes = [];
+        if (t.line === 'R') pathNodes = ['R12', 'R11', 'R10', 'R09', 'R08'];
+        if (t.line === 'BL') pathNodes = ['BL10', 'BL11', 'BL12', 'BL13', 'BL14', 'BL15', 'BL16'];
+        if (t.line === 'G') pathNodes = ['G12', 'G13', 'G14', 'G15', 'G16'];
+
+        const segments = pathNodes.length - 1;
+        const currentT = t.progress * segments;
+        const segIdx = Math.min(segments - 1, Math.floor(currentT));
+        const segT = currentT - segIdx;
+
+        const stA = STATE.stations.find(s => s.id === pathNodes[segIdx]);
+        const stB = STATE.stations.find(s => s.id === pathNodes[segIdx + 1]);
+
+        const pA = mapCoords(stA.x, stA.y);
+        const pB = mapCoords(stB.x, stB.y);
+
+        const curX = pA.x + (pB.x - pA.x) * segT;
+        const curY = pA.y + (pB.y - pA.y) * segT;
+
+        // Draw Train Sprite Indicator
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = t.color;
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(curX, curY, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = t.color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(curX, curY, 8.5, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Train Label
+        ctx.fillStyle = '#fef08a';
+        ctx.font = 'bold 9px "Silkscreen"';
+        ctx.fillText(t.id, curX + 11, curY - 5);
+        ctx.restore();
+      });
+
+      requestAnimationFrame(renderTopology);
+    }
+    requestAnimationFrame(renderTopology);
+
+    /* --- STREAMING_CHUNK:Dynamic Oscilloscope Scope Drawing --- */
+    const scopeCanvas = document.getElementById('scopeCanvas');
+    const sCtx = scopeCanvas.getContext('2d');
+
+    function resizeScopeCanvas() {
+      const rect = scopeCanvas.parentElement.getBoundingClientRect();
+      scopeCanvas.width = rect.width;
+      scopeCanvas.height = rect.height;
+    }
+    window.addEventListener('resize', resizeScopeCanvas);
+    resizeScopeCanvas();
+
+    let waveTick = 0;
+    function renderOscilloscope() {
+      sCtx.clearRect(0, 0, scopeCanvas.width, scopeCanvas.height);
+      const w = scopeCanvas.width;
+      const h = scopeCanvas.height;
+      const cy = h / 2;
+
+      // Draw Grid Horizontal Lines
+      sCtx.strokeStyle = 'rgba(79, 70, 229, 0.15)';
+      sCtx.lineWidth = 1;
+      for (let y = 0; y < h; y += 14) {
+        sCtx.beginPath();
+        sCtx.moveTo(0, y);
+        sCtx.lineTo(w, y);
+        sCtx.stroke();
+      }
+
+      // Wave 1: Lime Green (Traction pulse)
+      sCtx.save();
+      sCtx.strokeStyle = '#39ff14';
+      sCtx.lineWidth = 1.8;
+      sCtx.shadowColor = '#39ff14';
+      sCtx.shadowBlur = 8;
+      sCtx.beginPath();
+      for (let x = 0; x < w; x++) {
+        const noise = Math.sin(x * 0.1 + waveTick) * 2;
+        const y = cy + Math.sin((x + waveTick) * 0.035) * (h * 0.28) + noise;
+        if (x === 0) sCtx.moveTo(x, y);
+        else sCtx.lineTo(x, y);
+      }
+      sCtx.stroke();
+      sCtx.restore();
+
+      // Wave 2: Neon Pink (Impedance wave)
+      sCtx.save();
+      sCtx.strokeStyle = '#ff2a85';
+      sCtx.lineWidth = 1.3;
+      sCtx.shadowColor = '#ff2a85';
+      sCtx.shadowBlur = 5;
+      sCtx.beginPath();
+      for (let x = 0; x < w; x++) {
+        const y = cy + Math.cos((x - waveTick * 1.5) * 0.045) * (h * 0.18);
+        if (x === 0) sCtx.moveTo(x, y);
+        else sCtx.lineTo(x, y);
+      }
+      sCtx.stroke();
+      sCtx.restore();
+
+      waveTick += 2.5;
+      requestAnimationFrame(renderOscilloscope);
+    }
+    requestAnimationFrame(renderOscilloscope);
+
+    /* --- STREAMING_CHUNK:Interactive Station Clicks & Modals --- */
+    const modal = document.getElementById('modal-station');
+    const modalTitle = document.getElementById('modal-title');
+    const modalContent = document.getElementById('modal-content');
+    document.getElementById('modal-close').addEventListener('click', () => modal.classList.add('hidden'));
+
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      let found = null;
+      STATE.stations.forEach(st => {
+        const p = mapCoords(st.x, st.y);
+        const dist = Math.hypot(p.x - clickX, p.y - clickY);
+        if (dist < 15) found = st;
+      });
+
+      if (found) {
+        modalTitle.innerText = `${found.id} - ${found.name}`;
+        modalContent.innerHTML = `
+          <div>所屬路線: <span class="text-pink-400 font-bold">${found.line}號幹線</span></div>
+          <div>站點性質: <span class="text-lime-300">${found.isHub ? '核心換乘樞紐 (HUB)' : '一般停靠站點'}</span></div>
+          <div>月台門安全互鎖: <span class="text-cyan-300">PSD-NORMAL (100%)</span></div>
+          <div>第三軌供電段: <span class="text-yellow-300">FEEDER #04B (750V)</span></div>
+          <div>即時疏散等級: <span class="text-emerald-400">綠色警戒 (通暢)</span></div>
+        `;
+        modal.classList.remove('hidden');
+        addEventLog(`調度員檢視站點 [${found.id} ${found.name}] 遙測資訊`, 'norm');
+      }
+    });
+
+    /* --- STREAMING_CHUNK:Periodic Background Simulator --- */
+    setInterval(() => {
+      // Fluctuate station loads
+      const r10 = Math.min(98, Math.max(76, Math.floor(88 + (Math.random() * 8 - 4))));
+      document.getElementById('load-text-r10').innerText = r10 + '%';
+      document.getElementById('bar-r10').style.width = r10 + '%';
+
+      const kw = Math.floor(38000 + Math.random() * 850);
+      document.getElementById('live-kw').innerText = kw.toLocaleString() + ' kW';
+
+      // Random signal LEDs toggle
+      const sigs = document.querySelectorAll('#track-signals .y2k-led');
+      sigs.forEach(s => {
+        if (Math.random() < 0.2) {
+          s.className = 'y2k-led ' + (Math.random() > 0.4 ? 'led-lime' : Math.random() > 0.5 ? 'led-yellow' : 'led-red');
+        }
+      });
+
+      // Train ETAs countdown
+      STATE.trains.forEach(t => {
+        if (!STATE.panicActive) {
+          t.eta -= 1;
+          if (t.eta <= 0) {
+            t.eta = Math.floor(50 + Math.random() * 40);
+            addEventLog(`車次 ${t.id} 抵達節點 ${t.to}，月台門聯鎖正常開閉`, 'good');
+          }
+        }
+      });
+      renderTrainRows();
+    }, 1000);
+
+    /* --- STREAMING_CHUNK:Emergency Panic Protocol & Switch Toggles --- */
+    const panicBtn = document.getElementById('btn-panic');
+    panicBtn.addEventListener('click', () => {
+      STATE.panicActive = !STATE.panicActive;
+      if (STATE.panicActive) {
+        document.body.classList.add('emergency-strobe');
+        panicBtn.innerText = '解除煞停 (RESET)';
+        document.getElementById('led-cbtc').className = 'y2k-led led-red';
+        addEventLog('【緊急告警】PANIC PROTOCOL 觸發！全線列車緊急制動煞停！', 'danger');
+      } else {
+        document.body.classList.remove('emergency-strobe');
+        panicBtn.innerText = '緊急煞停 (PANIC)';
+        document.getElementById('led-cbtc').className = 'y2k-led led-cyan';
+        addEventLog('緊急制動解除，全線閉塞號誌重置，列車依 ATO 協定重新巡航', 'warn');
+      }
+    });
+
+    // CRT Toggle
+    const crtBtn = document.getElementById('btn-toggle-crt');
+    const crtLayer = document.getElementById('crt-layer');
+    crtBtn.addEventListener('click', () => {
+      STATE.crtEnabled = !STATE.crtEnabled;
+      if (STATE.crtEnabled) {
+        crtLayer.classList.remove('hidden');
+        crtBtn.innerText = 'CRT: ON';
+      } else {
+        crtLayer.classList.add('hidden');
+        crtBtn.innerText = 'CRT: OFF';
+      }
+    });
+
+    // Switch override toggle
+    const switchBtn = document.getElementById('btn-toggle-switch');
+    const switchText = document.getElementById('switch-status-text');
+    switchBtn.addEventListener('click', () => {
+      STATE.switchReversed = !STATE.switchReversed;
+      if (STATE.switchReversed) {
+        switchText.innerText = '道岔反位: REVERSED (分流線B)';
+        switchText.className = 'text-[11px] text-yellow-300 font-terminal';
+        addEventLog('調度員手動切換道岔 SW-4 至【反位】導向西門避車軌', 'warn');
+      } else {
+        switchText.innerText = '道岔定位: NORMAL (線位A)';
+        switchText.className = 'text-[11px] text-lime-400 font-terminal';
+        addEventLog('道岔 SW-4 復歸至【定位】直通模式', 'good');
+      }
+    });
+
+    // Initial table render
+    renderTrainRows();
+  </script>
+</body>
+</html>
